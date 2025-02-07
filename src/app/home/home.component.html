@@ -1,0 +1,14 @@
+<div class="container">
+  <mat-drawer-container class="drawer-container" autosize>
+    <mat-drawer mode="side" opened>
+      <h4>Elements</h4>
+      <div class="shape" draggable="true">Квадрат</div>
+      <div class="shape" draggable="true">Круг</div>
+      <div class="shape" draggable="true">Треугольник</div>
+    </mat-drawer>
+    <mat-drawer-content>
+      <div class="canvas" (drop)="onDrop($event)" (dragover)="allowDrop($event)">
+      </div>
+    </mat-drawer-content>
+  </mat-drawer-container>
+</div>

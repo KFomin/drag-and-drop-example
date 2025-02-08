@@ -1,13 +1,41 @@
 <div class="container">
   <mat-drawer-container class="drawer-container" autosize>
-    <mat-drawer mode="side" opened>
-      <h4>Elements</h4>
-      <div class="shape" draggable="true">Квадрат</div>
-      <div class="shape" draggable="true">Круг</div>
-      <div class="shape" draggable="true">Треугольник</div>
+    <mat-drawer class="mat-drawer" mode="side" opened>
+      <div class="shapes-container">
+        <h4>Elements</h4>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'square')">Squared</div>
+        <div class="shape shape--rounded" draggable="true" (dragstart)="onDragStart($event, 'circle')">Rounded</div>
+      </div>
     </mat-drawer>
     <mat-drawer-content>
-      <div class="canvas" (drop)="onDrop($event)" (dragover)="allowDrop($event)">
+      <div
+        class="canvas"
+        (drop)="onDrop($event)"
+        (dragover)="allowDrop($event)"
+        (mousemove)="handleMouseMove($event)"
+        (mouseup)="handleMouseUp()"
+      >
+        <ng-container *ngFor="let shape of shapes">
+          <div
+            class="shape-on-canvas"
+            [ngStyle]="{
+             'position': 'absolute',
+             'border-radius': shape.type === 'circle' ? '25px' : '0px' ,
+             'left.px': shape.x,
+             'top.px': shape.y
+             }"
+          >
+            <div class="drag-handle"
+                 (mousedown)="handleMouseDown($event, shape)"
+                 (mouseup)="handleMouseUp()"></div>
+            <textarea type="text"
+                      class="shape-input"
+                      aria-multiline="true"
+                      [value]="shape.text"
+                      (change)="shapeTextChanged(shape.id, $event)">
+            </textarea>
+          </div>
+        </ng-container>
       </div>
     </mat-drawer-content>
   </mat-drawer-container>

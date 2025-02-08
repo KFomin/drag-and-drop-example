@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {MatDrawer, MatDrawerContent, MatDrawerContainer} from "@angular/material/sidenav";
+import {MatDrawer, MatDrawerContainer, MatDrawerContent} from "@angular/material/sidenav";
 import {NgForOf, NgStyle} from "@angular/common";
 
 interface Shape {
@@ -47,11 +47,20 @@ export class HomeComponent {
   handleMouseMove(event: MouseEvent) {
     if (this.draggingShape) {
       event.preventDefault();
-      this.draggingShape.x = event.clientX - this.offsetX;
-      this.draggingShape.y = event.clientY - this.offsetY;
+      const canvasRect = (event.target as HTMLElement).closest('.canvas')?.getBoundingClientRect();
+      if (canvasRect) {
+        const newX = event.clientX - this.offsetX;
+        const newY = event.clientY  - this.offsetY;
+
+        const newShape: Shape = { ...this.draggingShape, x: newX, y: newY };
+
+        const positionAdjustedShape = this.findNewPosition(newShape);
+
+        this.draggingShape.x = positionAdjustedShape.x;
+        this.draggingShape.y = positionAdjustedShape.y;
+      }
     }
   }
-
   handleMouseUp() {
     this.draggingShape = null;
   }
@@ -62,24 +71,48 @@ export class HomeComponent {
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    const type = event.dataTransfer?.getData('text/plain'); // Получаем тип формы
+    const type = event.dataTransfer?.getData('text/plain');
 
     if (type) {
       const canvasRect = (event.target as HTMLElement).getBoundingClientRect();
-      const x = event.offsetX; // Позиция на канвасе
-      const y = event.offsetY;
+      const x = event.clientX - canvasRect.left;
+      const y = event.clientY - canvasRect.top;
 
-      this.shapes.push({
+      const newShape: Shape = {
         id: this.nextId++,
         type,
         x,
         y,
-        text: ""
-      });
+        text: ''
+      };
+
+      // Находим новую позицию для формы
+      const positionAdjustedShape = this.findNewPosition(newShape);
+      this.shapes.push(positionAdjustedShape);
     }
   }
 
   onDragStart(event: DragEvent, type: string) {
     event.dataTransfer?.setData('text/plain', type); // Передаем тип формы
+  }
+
+  private checkCollision(newShape: Shape): boolean {
+    return this.shapes.some(existingShape => {
+      return !(newShape.x > existingShape.x + 100 ||
+        newShape.x + 100 < existingShape.x ||
+        newShape.y > existingShape.y + 100 ||
+        newShape.y + 100 < existingShape.y);
+    });
+  }
+
+  private findNewPosition(shape: Shape): Shape {
+    while (this.checkCollision(shape)) {
+      shape.x += 110;
+      if (shape.x > window.innerWidth - 100) {
+        shape.x = 0;
+        shape.y += 110;
+      }
+    }
+    return shape;
   }
 }

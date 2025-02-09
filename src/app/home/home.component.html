@@ -17,12 +17,13 @@
           <div
             cdkDrag
             cdkDragBoundary=".canvas"
+            (cdkDragEnded)="onDragEnd($event, shape.id)"
             class="shape-on-canvas"
             [ngStyle]="{
              'position': 'absolute',
              'border-radius': shape.type === 'circle' ? '25px' : '0px',
-             'left.px': shape.x,
-             'top.px': shape.y
+             'left': shape.position.x + 'px',
+             'top': shape.position.y + 'px',
              }"
           >
             <div cdkDragHandle class="drag-handle">

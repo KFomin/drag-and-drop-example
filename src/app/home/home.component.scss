@@ -40,34 +40,91 @@ mat-drawer {
   border: 1px solid black;
   position: absolute;
   text-align: center;
-  resize: both;
   min-height: 25px;
   min-width: 75px;
   max-height: 120px;
   max-width: 220px;
   overflow: auto;
+  background-color: grey;
 
   .drag-handle {
-    width: 15px;
-    height: 15px;
-    background-color: #007bff;
-    cursor: grab;
     position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 50%;
+    top: 0;
+    left: 0;
+    cursor: grab;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+
+    .arrow {
+      position: absolute;
+      background-color: transparent;
+    }
+
+    .horizontal {
+      width: 14px;
+      height: 2px;
+      background-color: #fff;
+    }
+
+    .vertical {
+      width: 2px;
+      height: 14px;
+      background-color: #fff;
+    }
+
+
+    .horizontal:before,
+    .horizontal:after,
+    .vertical:before,
+    .vertical:after {
+      content: '';
+      position: absolute;
+      background-color: #fff;
+    }
+
+    .horizontal:before {
+      width: 2px;
+      height: 6px;
+      left: 0;
+      top: -2px;
+    }
+
+    .horizontal:after {
+      width: 2px;
+      height: 6px;
+      right: 0;
+      top: -2px;
+    }
+
+    .vertical:before {
+      width: 6px;
+      height: 2px;
+      top: 0;
+      left: -2px;
+    }
+
+    .vertical:after {
+      width: 6px;
+      height: 2px;
+      bottom: 0;
+      left: -2px;
+    }
   }
 }
 
 .shape-input {
+  color: #fffefe;
   resize: none;
-  margin: 5px;
-  padding: 4px;
+  margin: 2px;
   background-color: transparent;
   text-align: center;
   border: none;
   border-bottom: 1px solid #CCC;
+  width: 70%;
   height: 90%;
   text-wrap: balance;
   overflow: auto;

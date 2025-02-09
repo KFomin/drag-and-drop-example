@@ -12,28 +12,28 @@
         class="canvas"
         (drop)="onDrop($event)"
         (dragover)="allowDrop($event)"
-        (mousemove)="handleMouseMove($event)"
-        (mouseup)="handleMouseUp()"
       >
         <ng-container *ngFor="let shape of shapes">
           <div
+            cdkDrag
+            cdkDragBoundary=".canvas"
             class="shape-on-canvas"
             [ngStyle]="{
              'position': 'absolute',
-             'border-radius': shape.type === 'circle' ? '25px' : '0px' ,
+             'border-radius': shape.type === 'circle' ? '25px' : '0px',
              'left.px': shape.x,
              'top.px': shape.y
              }"
           >
-            <div class="drag-handle"
-                 (mousedown)="handleMouseDown($event, shape)"
-                 (mouseup)="handleMouseUp()"></div>
-            <textarea type="text"
-                      class="shape-input"
-                      aria-multiline="true"
-                      [value]="shape.text"
-                      (change)="shapeTextChanged(shape.id, $event)">
-            </textarea>
+            <div cdkDragHandle class="drag-handle">
+              <div class="arrow horizontal"></div>
+              <div class="arrow vertical"></div>
+            </div>
+            <input type="text"
+                   class="shape-input"
+                   aria-multiline="true"
+                   [value]="shape.text"
+                   (input)="shapeTextChanged(shape.id, $event)">
           </div>
         </ng-container>
       </div>

@@ -47,7 +47,14 @@ export class HomeComponent implements AfterViewInit {
 
   finishArrowCreation(shapeId: number | null) {
     if (this.startArrowId && shapeId) {
-      this.arrows.push({from: this.startArrowId, to: shapeId});
+      const alreadyConnected =
+        this.arrows.some(arrow => {
+          return arrow.from === this.startArrowId && arrow.to === shapeId
+        });
+
+      if (!alreadyConnected) {
+        this.arrows.push({from: this.startArrowId, to: shapeId});
+      }
     }
     this.startArrowId = null;
     this.creatingArrow = false;

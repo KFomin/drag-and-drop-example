@@ -75,33 +75,33 @@ export class HomeComponent implements AfterViewInit {
         const endX = toShapeRect.x - toShapeRect.width;
         const endY = toShapeRect.y;
 
-        // Рисуем линию
+        // Draw line
         ctx.beginPath();
-        ctx.moveTo(startX, startY); // Начало линии
-        ctx.lineTo(endX, endY); // Конец линии
-        ctx.strokeStyle = '#007bff'; // Цвет линии
-        ctx.lineWidth = 2; // Ширина линии
+        ctx.moveTo(startX, startY); // Start of the line
+        ctx.lineTo(endX, endY); // End of the line
+        ctx.strokeStyle = '#007bff'; // Line color
+        ctx.lineWidth = 2; // Line width
         ctx.stroke();
 
-        // Вычисление среднего положения для стрелочки
+        // Calculate the midpoint for the arrow
         const midX = (startX + endX) / 2;
         const midY = (startY + endY) / 2;
 
-        // Сдвиг стрелочки на 12 пикселей
-        const headlen = 10; // Длина стрелочки
-        const angle = Math.atan2(endY - startY, endX - startX); // Угол стрелки
-        const offset = 12; // Сдвиг в 12 пикселей
+        // Offset the arrow by 12 pixels
+        const headlen = 10; // Arrowhead length
+        const angle = Math.atan2(endY - startY, endX - startX); // Arrow angle
+        const offset = 12; // 12 pixels offset
 
-        // Новые позиции для рисования стрелки
+        // New positions to draw the arrow
         const arrowMidX = midX + offset * Math.cos(angle);
         const arrowMidY = midY + offset * Math.sin(angle);
 
-        // Рисуем стрелочку в сдвинутом центре
+        // Draw the arrow at the offset center
         ctx.beginPath();
-        ctx.moveTo(arrowMidX, arrowMidY); // Перемещаемся к смещенной середине линии
-        ctx.lineTo(arrowMidX - headlen * Math.cos(angle - Math.PI / 6), arrowMidY - headlen * Math.sin(angle - Math.PI / 6)); // Левая сторона стрелки
-        ctx.lineTo(arrowMidX - headlen * Math.cos(angle + Math.PI / 6), arrowMidY - headlen * Math.sin(angle + Math.PI / 6)); // Правая сторона стрелки
-        ctx.fillStyle = '#007bff'; // Цвет стрелки
+        ctx.moveTo(arrowMidX, arrowMidY); // Move to the offset midpoint of the line
+        ctx.lineTo(arrowMidX - headlen * Math.cos(angle - Math.PI / 6), arrowMidY - headlen * Math.sin(angle - Math.PI / 6)); // Left side of the arrowhead
+        ctx.lineTo(arrowMidX - headlen * Math.cos(angle + Math.PI / 6), arrowMidY - headlen * Math.sin(angle + Math.PI / 6)); // Right side of the arrowhead
+        ctx.fillStyle = '#007bff'; // Arrow color
         ctx.fill();
 
       }

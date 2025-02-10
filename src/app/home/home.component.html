@@ -9,16 +9,18 @@
     </mat-drawer>
     <mat-drawer-content>
       <div
-        class="canvas"
+        class="board"
+        [id]="'draggable-shapes-canvas'"
         (drop)="onDrop($event)"
         (dragover)="allowDrop($event)"
       >
         <ng-container *ngFor="let shape of shapes">
           <div
             cdkDrag
-            cdkDragBoundary=".canvas"
-            (cdkDragEnded)="onDragEnd($event, shape.id)"
-            class="shape-on-canvas"
+            cdkDragBoundary=".board"
+            class="shape-on-board"
+            (cdkDragMoved)="drawArrows()"
+            [id]="shape.id + '-shape-on-board'"
             [ngStyle]="{
              'position': 'absolute',
              'border-radius': shape.type === 'circle' ? '25px' : '0px',
@@ -35,8 +37,19 @@
                    aria-multiline="true"
                    [value]="shape.text"
                    (input)="shapeTextChanged(shape.id, $event)">
+            @if (creatingArrow && shape.id !== startArrowId) {
+              <div
+                class="connect-arrow"
+                (click)="finishArrowCreation(shape.id)"></div>
+            } @else {
+              <div
+                [id]="shape.id + '-shape-on-canvas'"
+                class="add-arrow"
+                (click)="startArrowCreation(shape.id)"></div>
+            }
           </div>
         </ng-container>
+        <canvas #canvas class="canvas-lines"></canvas>
       </div>
     </mat-drawer-content>
   </mat-drawer-container>

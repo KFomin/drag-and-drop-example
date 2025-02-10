@@ -74,13 +74,38 @@ export class HomeComponent implements AfterViewInit {
         const startY = fromShapeRect.y;
         const endX = toShapeRect.x - toShapeRect.width;
         const endY = toShapeRect.y;
+
+        // Рисуем линию
         ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = '#007bff';
-        ctx.lineWidth = 2;
+        ctx.moveTo(startX, startY); // Начало линии
+        ctx.lineTo(endX, endY); // Конец линии
+        ctx.strokeStyle = '#007bff'; // Цвет линии
+        ctx.lineWidth = 2; // Ширина линии
         ctx.stroke();
+
+        // Вычисление среднего положения для стрелочки
+        const midX = (startX + endX) / 2;
+        const midY = (startY + endY) / 2;
+
+        // Сдвиг стрелочки на 12 пикселей
+        const headlen = 10; // Длина стрелочки
+        const angle = Math.atan2(endY - startY, endX - startX); // Угол стрелки
+        const offset = 12; // Сдвиг в 12 пикселей
+
+        // Новые позиции для рисования стрелки
+        const arrowMidX = midX + offset * Math.cos(angle);
+        const arrowMidY = midY + offset * Math.sin(angle);
+
+        // Рисуем стрелочку в сдвинутом центре
+        ctx.beginPath();
+        ctx.moveTo(arrowMidX, arrowMidY); // Перемещаемся к смещенной середине линии
+        ctx.lineTo(arrowMidX - headlen * Math.cos(angle - Math.PI / 6), arrowMidY - headlen * Math.sin(angle - Math.PI / 6)); // Левая сторона стрелки
+        ctx.lineTo(arrowMidX - headlen * Math.cos(angle + Math.PI / 6), arrowMidY - headlen * Math.sin(angle + Math.PI / 6)); // Правая сторона стрелки
+        ctx.fillStyle = '#007bff'; // Цвет стрелки
+        ctx.fill();
+
       }
+
       this.ctx = ctx;
     })
   }

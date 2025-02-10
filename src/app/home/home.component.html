@@ -39,12 +39,11 @@
                    (input)="shapeTextChanged(shape.id, $event)">
             @if (creatingArrow && shape.id !== startArrowId) {
               <div
-                class="connect-arrow"
+                class="connect-point"
                 (click)="finishArrowCreation(shape.id)"></div>
             } @else {
               <div
-                [id]="shape.id + '-shape-on-canvas'"
-                class="add-arrow"
+                class="connect-arrow"
                 (click)="startArrowCreation(shape.id)"></div>
             }
           </div>

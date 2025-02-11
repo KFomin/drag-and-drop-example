@@ -1,86 +1,86 @@
 <div class="container">
   <mat-drawer-container class="drawer-container" autosize>
     <mat-drawer class="mat-drawer" mode="side" opened>
-      <div class="shapes-container">
+      <div class="cards-container">
         <h4>Elements</h4>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'GetInput')">Input</div>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'TranslateIntoMorse')">
+        <div class="card" draggable="true" (dragstart)="onDragStart($event, 'Input')">Input</div>
+        <div class="card" draggable="true" (dragstart)="onDragStart($event, 'ToMorse')">
           Translate To Morse
         </div>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'SuggestAge')">Suggest Age</div>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'ToImageUrl')">To Image Url</div>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'OutPut')">Output</div>
+        <div class="card" draggable="true" (dragstart)="onDragStart($event, 'SuggestAge')">Suggest Age</div>
+        <div class="card" draggable="true" (dragstart)="onDragStart($event, 'ToImageUrl')">Image</div>
+        <div class="card" draggable="true" (dragstart)="onDragStart($event, 'Output')">Output</div>
       </div>
     </mat-drawer>
     <mat-drawer-content>
       <div
         class="board"
         (click)="boardClicked()"
-        [id]="'draggable-shapes-canvas'"
+        [id]="'draggable-cards-canvas'"
         (drop)="onDrop($event)"
         (dragover)="allowDrop($event)"
       >
-        <ng-container *ngFor="let shape of shapes">
+        <ng-container *ngFor="let card of cards">
           <div
             cdkDrag
             cdkDragBoundary=".board"
-            class="shape-on-board"
-            (click)="onShapeClick($event, shape)"
+            class="card-on-board"
+            (click)="onCardClick($event, card)"
             (cdkDragMoved)="drawArrows()"
-            [id]="shape.id + '-shape-on-board'"
+            [id]="card.id + '-card-on-board'"
             [ngClass]="{
-            'open-to-connect' : creatingArrow && shape.action !== 'GetInput' && !shape.parent,
-            'connectable' : shape.action !== 'GetInput',
-            'input-shape' : shape.action === 'GetInput',
-            'output-shape' : shape.action === 'OutPut'
+            'open-to-connect' : creatingArrow && card.action !== 'Input' && !card.parent,
+            'connectable' : card.action !== 'Input',
+            'input-card' : card.action === 'Input',
+            'output-card' : card.action === 'Output'
             }"
             [ngStyle]="{'position': 'absolute',
-                        'left': shape.position.x + 'px',
-                        'top': shape.position.y + 'px',
+                        'left': card.position.x + 'px',
+                        'top': card.position.y + 'px',
                         }"
           >
             <div cdkDragHandle class="drag-handle">
               <div class="arrow horizontal"></div>
               <div class="arrow vertical"></div>
             </div>
-            <div class="drag-delete" (click)="deleteShape(shape.id)">
+            <div class="drag-delete" (click)="deleteCard(card.id)">
               <div class="part-1"></div>
               <div class="part-2"></div>
             </div>
             <input type="text"
-                   class="shape-input"
+                   class="card-input"
                    aria-multiline="true"
-                   [value]="shape.title"
-                   (input)="shapeTextChanged(shape.id, $event)">
-            @if (shape.action === 'OutPut') {
-              @if (shape.id === loadingShapeId) {
+                   [value]="card.title"
+                   (input)="cardTextChanged(card.id, $event)">
+            @if (card.action === 'Output') {
+              @if (card.id === loadingCardId) {
                 <span class="loader"></span>
               } @else {
-                @switch (getParentAction(shape)) {
+                @switch (getParentAction(card)) {
                   @case ('SuggestAge') {
-                    <p class="output-text">{{ shape.value.getValue() }}</p>
+                    <p class="output-text">{{ card.value.getValue() }}</p>
                   }
                   @case ('ToImageUrl') {
-                    <img alt="image from url" class="output-image" [src]="shape.value.getValue()"/>
+                    <img alt="image from url" class="output-image" [src]="card.value.getValue()"/>
                   }
                   @default {
-                    <p class="output-text">{{ shape.value.getValue() }}</p>
+                    <p class="output-text">{{ card.value.getValue() }}</p>
                   }
                 }
               }
             }
-            @if (shape.action === 'GetInput') {
+            @if (card.action === 'Input') {
               <textarea type="text"
-                        class="shape-text-area"
+                        class="card-text-area"
                         aria-multiline="true"
-                        [value]="shape.value.getValue()"
-                        (input)="inputValueChanged(shape.id, $event)">
+                        [value]="card.value.getValue()"
+                        (input)="inputValueChanged(card.id, $event)">
               </textarea>
             }
-            @if (canConnect(shape)) {
+            @if (canConnect(card)) {
               <div
                 class="connect-arrow"
-                (click)="startArrowCreation(shape.id)"></div>
+                (click)="startArrowCreation(card.id)"></div>
             }
           </div>
         </ng-container>

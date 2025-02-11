@@ -13,7 +13,7 @@ mat-drawer {
   padding: 10px;
   background: #f4f4f4;
 
-  .shapes-container {
+  .cards-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -21,7 +21,7 @@ mat-drawer {
   }
 }
 
-.shape {
+.card {
   margin: 5px 0;
   padding: 10px;
   border: 1px solid black;
@@ -34,7 +34,7 @@ mat-drawer {
   }
 }
 
-.shape-on-board {
+.card-on-board {
   text-align: center;
   padding: 15px 45px 15px 35px;
   overflow: auto;
@@ -42,10 +42,10 @@ mat-drawer {
   border-radius: 5px;
   z-index: 2;
 
-  &.input-shape {
+  &.input-card {
     background-color: rgb(196, 198, 250);
     width: 250px;
-    height: 300px;
+    height: 150px;
   }
 
   &.connectable {
@@ -54,10 +54,10 @@ mat-drawer {
     height: 50px;
   }
 
-  &.output-shape {
+  &.output-card {
     background-color: rgb(250, 196, 196);
     width: 250px;
-    height: 350px;
+    height: 150px;
   }
 
   &.open-to-connect {
@@ -213,7 +213,7 @@ mat-drawer {
   }
 }
 
-.shape-input {
+.card-input {
   color: #373737;
   font-weight: 600;
   resize: none;
@@ -228,7 +228,7 @@ mat-drawer {
   outline: none;
 }
 
-.shape-text-area {
+.card-text-area {
   margin-top: 10px;
   resize: none;
   background-color: #f4f4f4;

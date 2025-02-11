@@ -2,20 +2,10 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@an
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from "@angular/material/sidenav";
 import {NgClass, NgForOf, NgStyle} from "@angular/common";
 import {DragDropModule, Point} from "@angular/cdk/drag-drop";
-import {BehaviorSubject, debounceTime, lastValueFrom} from "rxjs";
-import {HttpClient} from '@angular/common/http';
+import {BehaviorSubject, debounceTime} from "rxjs";
+import {CardKind, Card} from "../../data/models";
+import {CardService} from "../../service/card.service";
 
-type Action = 'GetInput' | 'ToImageUrl' | 'SuggestAge' | 'OutPut' | 'TranslateIntoMorse';
-
-interface Shape {
-  id: number;
-  action: Action;
-  position: Point;
-  title: string;
-  value: BehaviorSubject<string>;
-  parent?: number;
-  connections: Set<number>;
-}
 
 @Component({
   selector: 'app-home',
@@ -35,13 +25,13 @@ interface Shape {
 export class HomeComponent implements AfterViewInit {
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D | null = null;
-  shapes: Shape[] = [];
+  cards: Card[] = [];
   nextId = 1;
   creatingArrow: boolean = false;
   startArrowId: number | null = null;
-  loadingShapeId: number | null = null;
+  loadingCardId: number | null = null;
 
-  constructor(private http: HttpClient) {
+  constructor(private card: CardService) {
   }
 
   ngAfterViewInit() {
@@ -51,67 +41,67 @@ export class HomeComponent implements AfterViewInit {
     this.drawArrows();
   }
 
-  startArrowCreation(shapeId: number) {
-    this.startArrowId = shapeId;
+  startArrowCreation(cardId: number) {
+    this.startArrowId = cardId;
     this.creatingArrow = true;
   }
 
-  onShapeClick(event: MouseEvent, shape: Shape) {
+  onCardClick(event: MouseEvent, card: Card) {
     event.preventDefault();
     event.stopPropagation();
-    switch (shape.action) {
+    switch (card.action) {
       case 'ToImageUrl':
-        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
-          this.finishArrowCreation(shape.id);
+        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
+          this.finishArrowCreation(card.id);
         }
         break;
       case 'SuggestAge':
-        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
-          this.finishArrowCreation(shape.id);
+        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
+          this.finishArrowCreation(card.id);
         }
         break;
-      case "TranslateIntoMorse":
-        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
-          this.finishArrowCreation(shape.id);
+      case "ToMorse":
+        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
+          this.finishArrowCreation(card.id);
         }
         break;
-      case 'OutPut':
-        if (this.creatingArrow && !shape.parent) {
-          this.finishArrowCreation(shape.id);
+      case 'Output':
+        if (this.creatingArrow && !card.parent) {
+          this.finishArrowCreation(card.id);
         }
         break;
-      case 'GetInput':
+      case 'Input':
         break;
       default:
         break;
     }
   }
 
-  finishArrowCreation(shapeId: number) {
-    const parent = this.shapes.find(s => s.id === this.startArrowId);
+  finishArrowCreation(cardId: number) {
+    const parent = this.cards.find(s => s.id === this.startArrowId);
     if (this.creatingArrow && parent) {
-      this.shapes.map(shape => {
-          if (shape.id === parent.id) {
-            shape.connections.add(shapeId);
+      this.cards.map(card => {
+          if (card.id === parent.id) {
+            card.connections.add(cardId);
           }
-          if (shape.id === shapeId) {
-            shape.parent = parent.id;
+          if (card.id === cardId) {
+            card.parent = parent.id;
 
             parent.value.pipe(debounceTime(1000)).subscribe(value => {
-              if (shape.action === 'SuggestAge') {
-                this.suggestAge(value).then(ageResponse => {
-                    this.loadingShapeId = null;
-                    shape.value.next(ageResponse)
+              if (card.action === 'SuggestAge') {
+                this.card.suggestAge(value).then(ageResponse => {
+                    this.loadingCardId = null;
+                    card.value.next(ageResponse)
                   }
                 )
-              } else if (shape.action === 'TranslateIntoMorse') {
-                this.translateIntoMorse(value).then(morseResponse => {
-                    this.loadingShapeId = null;
-                    shape.value.next(morseResponse)
+              } else if (card.action === 'ToMorse') {
+                this.card.translateIntoMorse(value).then(morseResponse => {
+                    this.loadingCardId = null;
+                    card.value.next(morseResponse)
                   }
                 )
               } else {
-                shape.value.next(value);
+                card.value.next(value);
               }
             })
           }
@@ -123,35 +113,6 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  async suggestAge(value: string): Promise<string> {
-
-    try {
-      const response = await lastValueFrom(
-        this.http.get<{ age: number }>(`https://api.agify.io?name=${encodeURIComponent(value)}`)
-      );
-      if (response.age === null) {
-        return "Sorry, I can't guess your age";
-      }
-      return (value + ' age is estimately ' + response.age);
-
-    } catch
-      (error) {
-      return "Failed to get age, sorry!"
-    }
-  }
-
-  async translateIntoMorse(value: string): Promise<string> {
-    try {
-      const response = await lastValueFrom(
-        this.http.get<{
-          contents: { translated: string }
-        }>(`https://api.funtranslations.com/translate/morse.json?text=${encodeURIComponent(value)}`)
-      );
-      return response.contents.translated;
-    } catch (error) {
-      return "Failed to get morse code, sorry!"
-    }
-  }
 
   drawArrows() {
     if (!this.ctx) {
@@ -163,31 +124,31 @@ export class HomeComponent implements AfterViewInit {
     ctx.canvas.height = ctx.canvas.clientHeight;
     ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
 
-    this.shapes.map(shape => {
-      for (const connectionId of shape.connections) {
-        ctx = this.drawArrow(ctx, shape, connectionId);
+    this.cards.map(card => {
+      for (const connectionId of card.connections) {
+        ctx = this.drawArrow(ctx, card, connectionId);
       }
     })
     this.ctx = ctx;
   }
 
-  drawArrow(ctx: CanvasRenderingContext2D, shape: Shape, connectionId: number): CanvasRenderingContext2D {
-    const fromShape = document.getElementById(shape.id + '-shape-on-board') as HTMLElement;
-    const toShape = document.getElementById(connectionId + '-shape-on-board') as HTMLElement;
-    if (fromShape && toShape) {
-      let fromShapeRect = fromShape.getBoundingClientRect();
-      let toShapeRect = toShape.getBoundingClientRect();
+  drawArrow(ctx: CanvasRenderingContext2D, card: Card, connectionId: number): CanvasRenderingContext2D {
+    const fromCard = document.getElementById(card.id + '-card-on-board') as HTMLElement;
+    const toCard = document.getElementById(connectionId + '-card-on-board') as HTMLElement;
+    if (fromCard && toCard) {
+      let fromCardRect = fromCard.getBoundingClientRect();
+      let toCardRect = toCard.getBoundingClientRect();
 
-      const [startX, startY] = shape.action === 'GetInput'
-        ? [fromShapeRect.x, (fromShapeRect.y + window.scrollY)]
-        : [(fromShapeRect.x - fromShapeRect.width / 2), (fromShapeRect.y + window.scrollY)];
+      const [startX, startY] = card.action === 'Input'
+        ? [fromCardRect.x, (fromCardRect.y + window.scrollY)]
+        : [(fromCardRect.x - fromCardRect.width / 2), (fromCardRect.y + window.scrollY)];
 
 
-      const endX = shape.action === 'OutPut'
-        ? toShapeRect.x
-        : (toShapeRect.x - toShapeRect.width / 2);
+      const endX = card.action === 'Output'
+        ? toCardRect.x
+        : (toCardRect.x - toCardRect.width / 2);
 
-      const endY = toShapeRect.top + window.scrollY;
+      const endY = toCardRect.top + window.scrollY;
 
       // Draw line
       ctx.beginPath();
@@ -221,10 +182,10 @@ export class HomeComponent implements AfterViewInit {
     return ctx;
   }
 
-  shapeTextChanged(shapeId: number, event: Event) {
-    const shape = this.shapes.find(s => s.id === shapeId);
-    if (shape && event.target) {
-      shape.title = (event.target as HTMLInputElement).value;
+  cardTextChanged(cardId: number, event: Event) {
+    const card = this.cards.find(s => s.id === cardId);
+    if (card && event.target) {
+      card.title = (event.target as HTMLInputElement).value;
     }
   }
 
@@ -237,10 +198,10 @@ export class HomeComponent implements AfterViewInit {
 
     const data = event.dataTransfer?.getData('text/plain');
 
-    let action: Action | undefined;
+    let action: CardKind | undefined;
     switch (data) {
-      case 'GetInput':
-        action = 'GetInput';
+      case 'Input':
+        action = 'Input';
         break;
       case 'ToImageUrl':
         action = 'ToImageUrl';
@@ -248,11 +209,11 @@ export class HomeComponent implements AfterViewInit {
       case 'SuggestAge':
         action = 'SuggestAge';
         break;
-      case 'TranslateIntoMorse':
-        action = 'TranslateIntoMorse';
+      case 'ToMorse':
+        action = 'ToMorse';
         break;
-      case 'OutPut':
-        action = 'OutPut';
+      case 'Output':
+        action = 'Output';
         break;
       default:
         break;
@@ -262,20 +223,20 @@ export class HomeComponent implements AfterViewInit {
       const y = event.offsetY;
       const position = this.toPoint(x, y);
 
-      const newShape: Shape = {
+      const newCard: Card = {
         id: this.nextId++,
         action: action,
         position,
-        title: this.translateShapeTitle(action),
+        title: this.card.translateCardTitle(action),
         value: new BehaviorSubject<string>(''),
         connections: new Set<number>(),
       };
 
-      this.shapes.push(newShape);
+      this.cards.push(newCard);
     }
   }
 
-  onDragStart(event: DragEvent, action: Action) {
+  onDragStart(event: DragEvent, action: CardKind) {
     event.dataTransfer?.setData('text/plain', action);
   }
 
@@ -288,19 +249,19 @@ export class HomeComponent implements AfterViewInit {
     this.drawArrows();
   }
 
-  inputValueChanged(id: number, $event: Event) {
-    const shape = this.shapes.find(s => s.id === id);
+  inputValueChanged(cardId: number, $event: Event) {
+    const card = this.cards.find(s => s.id === cardId);
     const value = ($event.target as HTMLInputElement).value;
-    if (shape && $event.target) {
-      shape.value.next(value);
+    if (card && $event.target) {
+      card.value.next(value);
     }
   }
 
-  canConnect(shape: Shape): boolean {
+  canConnect(card: Card): boolean {
     return (
-      shape.action !== 'OutPut'
-      && ((shape.action === 'GetInput' && !this.creatingArrow)
-        || this.shapes.some(s => s.connections.has(shape.id)))
+      card.action !== 'Output'
+      && ((card.action === 'Input' && !this.creatingArrow)
+        || this.cards.some(s => s.connections.has(card.id)))
     );
   }
 
@@ -309,27 +270,12 @@ export class HomeComponent implements AfterViewInit {
     this.startArrowId = null;
   }
 
-  getParentAction(shape: Shape): Action | undefined {
-    return this.shapes.find(s => s.id === shape.parent)?.action;
+  getParentAction(card: Card): CardKind | undefined {
+    return this.cards.find(s => s.id === card.parent)?.action;
   }
 
-  translateShapeTitle(action: Action): string {
-    switch (action) {
-      case "OutPut":
-        return "Result";
-      case "TranslateIntoMorse":
-        return "To Morse";
-      case 'GetInput':
-        return 'Input';
-      case 'ToImageUrl':
-        return 'To Image';
-      case 'SuggestAge':
-        return 'Get Age';
-    }
-  }
-
-  deleteShape(id: number) {
-    this.shapes = this.shapes
+  deleteCard(id: number) {
+    this.cards = this.cards
       .filter(s => (s.id !== id))
       .map(s => {
           if (s.parent === id) {

@@ -1,13 +1,15 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from "@angular/material/sidenav";
-import {NgForOf, NgStyle} from "@angular/common";
+import {NgClass, NgForOf, NgStyle} from "@angular/common";
 import {DragDropModule, Point} from "@angular/cdk/drag-drop";
 
 interface Shape {
   id: number;
-  type: string;
+  action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut';
   position: Point;
-  text: string;
+  title: string;
+  value: string;
+  parent?: number;
   connections: Set<number>;
 }
 
@@ -21,6 +23,7 @@ interface Shape {
     NgForOf,
     NgStyle,
     DragDropModule,
+    NgClass,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
@@ -45,18 +48,39 @@ export class HomeComponent implements AfterViewInit {
     this.creatingArrow = true;
   }
 
-  finishArrowCreation(shapeId: number | null) {
-    if (this.startArrowId && shapeId) {
-      if (this.shapes.find(s => s.id === shapeId)?.connections.has(this.startArrowId)) {
-        this.startArrowId = null;
-        this.creatingArrow = false;
-        this.drawArrows();
-        return
-      }
+  onShapeClick(event: MouseEvent, shape: Shape) {
+    event.preventDefault();
+    event.stopPropagation();
+    switch (shape.action) {
+      case 'GetInput':
+        break;
+      case 'ToImageUrl':
+        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
+          this.finishArrowCreation(shape.id);
+        }
+        break;
+      case 'ToFunTranslation':
+        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
+          this.finishArrowCreation(shape.id);
+        }
+        break;
+      case 'OutPut':
+        if (this.creatingArrow && !shape.parent) {
+          this.finishArrowCreation(shape.id);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  finishArrowCreation(shapeId: number) {
+    if (this.creatingArrow && this.startArrowId) {
       this.shapes.map(shape => {
         if (shape.id === this.startArrowId) {
           shape.connections.add(shapeId);
         }
+        shape.parent = this.startArrowId || undefined;
       })
       this.startArrowId = null;
       this.creatingArrow = false;
@@ -81,9 +105,17 @@ export class HomeComponent implements AfterViewInit {
         if (fromShape && toShape) {
           let fromShapeRect = fromShape.getBoundingClientRect();
           let toShapeRect = toShape.getBoundingClientRect();
-          const startX = fromShapeRect.x - fromShapeRect.width;
+
+          const startX = this.shapes.find(s => s.id === connectionId)?.action === 'GetInput'
+            ? fromShapeRect.x
+            : (fromShapeRect.x - fromShapeRect.width / 2);
+
           const startY = fromShapeRect.y;
-          const endX = toShapeRect.x - toShapeRect.width;
+
+          const endX = this.shapes.find(s => s.id === connectionId)?.action === 'OutPut'
+            ? toShapeRect.x
+            : (toShapeRect.x - toShapeRect.width / 2);
+
           const endY = toShapeRect.y;
 
           // Draw line
@@ -125,7 +157,7 @@ export class HomeComponent implements AfterViewInit {
   shapeTextChanged(shapeId: number, event: Event) {
     const shape = this.shapes.find(s => s.id === shapeId);
     if (shape && event.target) {
-      shape.text = (event.target as HTMLInputElement).value;
+      shape.title = (event.target as HTMLInputElement).value;
     }
   }
 
@@ -135,18 +167,37 @@ export class HomeComponent implements AfterViewInit {
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    const type = event.dataTransfer?.getData('text/plain');
 
-    if (type) {
+    const data = event.dataTransfer?.getData('text/plain');
+
+    let action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut' | undefined;
+    switch (data) {
+      case 'GetInput':
+        action = 'GetInput';
+        break;
+      case 'ToImageUrl':
+        action = 'ToImageUrl';
+        break;
+      case 'ToFunTranslation':
+        action = 'ToFunTranslation';
+        break;
+      case 'OutPut':
+        action = 'OutPut';
+        break;
+      default:
+        break;
+    }
+    if (action) {
       const x = event.offsetX;
       const y = event.offsetY;
       const position = this.toPoint(x, y);
 
       const newShape: Shape = {
         id: this.nextId++,
-        type,
+        action: action,
         position,
-        text: '',
+        title: String(action),
+        value: '',
         connections: new Set<number>(),
       };
 
@@ -154,8 +205,8 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  onDragStart(event: DragEvent, type: string) {
-    event.dataTransfer?.setData('text/plain', type);
+  onDragStart(event: DragEvent, action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut') {
+    event.dataTransfer?.setData('text/plain', action);
   }
 
   toPoint(x: number, y: number): Point {
@@ -165,6 +216,29 @@ export class HomeComponent implements AfterViewInit {
   @HostListener('window:resize')
   onResize() {
     this.drawArrows();
+  }
+
+  inputValueChanged(id: number, $event: Event) {
+    const shape = this.shapes.find(s => s.id === id);
+    const value = ($event.target as HTMLInputElement).value;
+    if (shape && $event.target) {
+      shape.value = ($event.target as HTMLInputElement).value;
+    }
+  }
+
+  canConnect(shape: Shape): boolean {
+    return (
+      shape.action !== 'OutPut'
+      && ((shape.action === 'GetInput' && !this.creatingArrow)
+        || this.shapes.some(s => s.connections.has(shape.id)))
+    );
+  }
+
+  protected readonly speechSynthesis = speechSynthesis;
+
+  boardClicked() {
+    this.creatingArrow = false;
+    this.startArrowId = null;
   }
 }
 

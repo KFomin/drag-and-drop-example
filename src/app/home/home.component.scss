@@ -1,10 +1,10 @@
 .container {
-  height: 100vh;
+  height: 200%;
   display: flex;
 }
 
 .drawer-container {
-  height: 100vh;
+  height: 200%;
   width: 100vw;
 }
 
@@ -36,12 +36,33 @@ mat-drawer {
 
 .shape-on-board {
   text-align: center;
-  height: 25px;
-  width: 75px;
   padding: 15px 45px 15px 35px;
   overflow: auto;
-  background-color: grey;
+  border: 1px solid black;
+  border-radius: 5px;
   z-index: 2;
+
+  &.input-shape {
+    background-color: rgb(196, 198, 250);
+    width: 250px;
+    height: 300px;
+  }
+
+  &.connectable {
+    background-color: antiquewhite;
+    width: 75px;
+    height: 50px;
+  }
+
+  &.output-shape {
+    width: 250px;
+    height: 350px;
+  }
+
+  &.open-to-connect {
+    background-color: #439a39;
+    color: white;
+  }
 
   .connect-arrow {
     position: absolute;
@@ -154,17 +175,27 @@ mat-drawer {
 }
 
 .shape-input {
-  color: #fffefe;
+  color: #373737;
+  font-weight: 600;
   resize: none;
   margin: 2px;
+  width: 100%;
   background-color: transparent;
   text-align: center;
   border: none;
   border-bottom: 1px solid #CCC;
-  width: 100%;
-  height: 90%;
-  overflow: auto;
+  height: auto;
+  overflow: hidden;
   outline: none;
+}
+
+.shape-text-area {
+  margin-top: 10px;
+  resize: none;
+  background-color: #f4f4f4;
+  width: 100%;
+  height: 70%;
+  border-radius: 5px;
 }
 
 mat-drawer-content {
@@ -177,7 +208,7 @@ mat-drawer-content {
 
 .board {
   width: 100%;
-  height: 100%;
+  height: 200%;
   border: 2px dashed #ccc;
   background: #fafafa;
   display: flex;

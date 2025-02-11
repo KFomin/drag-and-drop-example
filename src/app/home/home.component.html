@@ -3,13 +3,16 @@
     <mat-drawer class="mat-drawer" mode="side" opened>
       <div class="shapes-container">
         <h4>Elements</h4>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'square')">Squared</div>
-        <div class="shape shape--rounded" draggable="true" (dragstart)="onDragStart($event, 'circle')">Rounded</div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'GetInput')">Input</div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'ToFunTranslation')">Translate</div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'ToImageUrl')">To Image Url</div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'OutPut')">Output</div>
       </div>
     </mat-drawer>
     <mat-drawer-content>
       <div
         class="board"
+        (click)="boardClicked()"
         [id]="'draggable-shapes-canvas'"
         (drop)="onDrop($event)"
         (dragover)="allowDrop($event)"
@@ -19,14 +22,19 @@
             cdkDrag
             cdkDragBoundary=".board"
             class="shape-on-board"
+            (click)="onShapeClick($event, shape)"
             (cdkDragMoved)="drawArrows()"
             [id]="shape.id + '-shape-on-board'"
-            [ngStyle]="{
-             'position': 'absolute',
-             'border-radius': shape.type === 'circle' ? '25px' : '0px',
-             'left': shape.position.x + 'px',
-             'top': shape.position.y + 'px',
-             }"
+            [ngClass]="{
+            'open-to-connect' : creatingArrow && shape.action !== 'GetInput' && !shape.parent,
+            'connectable' : shape.action !== 'GetInput',
+            'input-shape' : shape.action === 'GetInput',
+            'output-shape' : shape.action === 'OutPut'
+            }"
+            [ngStyle]="{'position': 'absolute',
+                        'left': shape.position.x + 'px',
+                        'top': shape.position.y + 'px',
+                        }"
           >
             <div cdkDragHandle class="drag-handle">
               <div class="arrow horizontal"></div>
@@ -35,13 +43,24 @@
             <input type="text"
                    class="shape-input"
                    aria-multiline="true"
-                   [value]="shape.text"
+                   [value]="shape.title"
                    (input)="shapeTextChanged(shape.id, $event)">
-            @if (creatingArrow && shape.id !== startArrowId) {
-              <div
-                class="connect-point"
-                (click)="finishArrowCreation(shape.id)"></div>
-            } @else {
+            @if (shape.action === 'OutPut') {
+              @switch (shape.action) {
+                @case ('OutPut') {
+
+                }
+
+              }
+            }
+            @if (shape.action === 'GetInput') {
+              <textarea type="text"
+                        class="shape-text-area"
+                        aria-multiline="true"
+                        [value]="shape.value"
+                        (input)="inputValueChanged(shape.id, $event)"></textarea>
+            }
+            @if (canConnect(shape)) {
               <div
                 class="connect-arrow"
                 (click)="startArrowCreation(shape.id)"></div>

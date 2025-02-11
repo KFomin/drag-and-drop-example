@@ -39,6 +39,7 @@ export class HomeComponent implements AfterViewInit {
   nextId = 1;
   creatingArrow: boolean = false;
   startArrowId: number | null = null;
+  loadingShapeId: number | null = null;
 
   constructor(private http: HttpClient) {
   }
@@ -99,15 +100,16 @@ export class HomeComponent implements AfterViewInit {
             parent.value.pipe(debounceTime(1000)).subscribe(value => {
               if (shape.action === 'SuggestAge') {
                 this.suggestAge(value).then(ageResponse => {
+                    this.loadingShapeId = null;
                     shape.value.next(ageResponse)
                   }
                 )
               } else if (shape.action === 'TranslateIntoMorse') {
                 this.translateIntoMorse(value).then(morseResponse => {
+                    this.loadingShapeId = null;
                     shape.value.next(morseResponse)
                   }
                 )
-
               } else {
                 shape.value.next(value);
               }
@@ -122,6 +124,7 @@ export class HomeComponent implements AfterViewInit {
   }
 
   async suggestAge(value: string): Promise<string> {
+
     try {
       const response = await lastValueFrom(
         this.http.get<{ age: number }>(`https://api.agify.io?name=${encodeURIComponent(value)}`)
@@ -326,7 +329,16 @@ export class HomeComponent implements AfterViewInit {
   }
 
   deleteShape(id: number) {
-    this.shapes = this.shapes.filter(s => s.id !== id);
+    this.shapes = this.shapes
+      .filter(s => (s.id !== id))
+      .map(s => {
+          if (s.parent === id) {
+            delete s.parent;
+          }
+          s.connections.delete(id)
+          return s;
+        }
+      );
     this.drawArrows();
   }
 }

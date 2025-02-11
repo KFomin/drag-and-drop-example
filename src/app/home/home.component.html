@@ -53,15 +53,19 @@
                    [value]="shape.title"
                    (input)="shapeTextChanged(shape.id, $event)">
             @if (shape.action === 'OutPut') {
-              @switch (getParentAction(shape)) {
-                @case ('SuggestAge') {
-                  <p class="output-text">{{ shape.value.getValue() }}</p>
-                }
-                @case ('ToImageUrl') {
-                  <img alt="image from url" class="output-image" [src]="shape.value.getValue()"/>
-                }
-                @default {
-                  <p class="output-text">{{ shape.value.getValue() }}</p>
+              @if (shape.id === loadingShapeId) {
+                <span class="loader"></span>
+              } @else {
+                @switch (getParentAction(shape)) {
+                  @case ('SuggestAge') {
+                    <p class="output-text">{{ shape.value.getValue() }}</p>
+                  }
+                  @case ('ToImageUrl') {
+                    <img alt="image from url" class="output-image" [src]="shape.value.getValue()"/>
+                  }
+                  @default {
+                    <p class="output-text">{{ shape.value.getValue() }}</p>
+                  }
                 }
               }
             }
@@ -70,7 +74,8 @@
                         class="shape-text-area"
                         aria-multiline="true"
                         [value]="shape.value.getValue()"
-                        (input)="inputValueChanged(shape.id, $event)"></textarea>
+                        (input)="inputValueChanged(shape.id, $event)">
+              </textarea>
             }
             @if (canConnect(shape)) {
               <div

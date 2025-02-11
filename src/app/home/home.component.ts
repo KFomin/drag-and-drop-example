@@ -324,5 +324,10 @@ export class HomeComponent implements AfterViewInit {
         return 'Get Age';
     }
   }
+
+  deleteShape(id: number) {
+    this.shapes = this.shapes.filter(s => s.id !== id);
+    this.drawArrows();
+  }
 }
 

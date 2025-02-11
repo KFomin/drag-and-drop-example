@@ -115,6 +115,35 @@ mat-drawer {
     }
   }
 
+  .drag-delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #fff;
+    border-radius: 25px;
+    margin: 4px;
+
+    .part-1 {
+      position: absolute;
+      width: 16px;
+      border-bottom: 2px solid #fff;
+      transform: rotate(45deg);
+    }
+
+    .part-2 {
+      position: absolute;
+      width: 16px;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg);
+    }
+
+  }
 
   .drag-handle {
     position: absolute;
@@ -126,6 +155,7 @@ mat-drawer {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 4px;
 
     .arrow {
       position: absolute;
@@ -133,14 +163,14 @@ mat-drawer {
     }
 
     .horizontal {
-      width: 14px;
+      width: 18px;
       height: 2px;
       background-color: #fff;
     }
 
     .vertical {
       width: 2px;
-      height: 14px;
+      height: 18px;
       background-color: #fff;
     }
 

@@ -55,6 +55,7 @@ mat-drawer {
   }
 
   &.output-shape {
+    background-color: rgb(250, 196, 196);
     width: 250px;
     height: 350px;
   }
@@ -84,6 +85,14 @@ mat-drawer {
       font-size: 15px;
       text-align: center;
     }
+  }
+
+  .output-image {
+    max-height: 300px;
+    width: auto;
+    max-width: 220px;
+    height: auto;
+    object-fit: contain;
   }
 
   .connect-point {

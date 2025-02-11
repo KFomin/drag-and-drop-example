@@ -2,13 +2,17 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@an
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from "@angular/material/sidenav";
 import {NgClass, NgForOf, NgStyle} from "@angular/common";
 import {DragDropModule, Point} from "@angular/cdk/drag-drop";
+import {BehaviorSubject, debounceTime, lastValueFrom} from "rxjs";
+import {HttpClient} from '@angular/common/http';
+
+type Action = 'GetInput' | 'ToImageUrl' | 'SuggestAge' | 'OutPut' | 'TranslateIntoMorse';
 
 interface Shape {
   id: number;
-  action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut';
+  action: Action;
   position: Point;
   title: string;
-  value: string;
+  value: BehaviorSubject<string>;
   parent?: number;
   connections: Set<number>;
 }
@@ -36,6 +40,9 @@ export class HomeComponent implements AfterViewInit {
   creatingArrow: boolean = false;
   startArrowId: number | null = null;
 
+  constructor(private http: HttpClient) {
+  }
+
   ngAfterViewInit() {
     this.ctx = this.canvas.nativeElement.getContext('2d');
     this.canvas.nativeElement.width = window.innerWidth;
@@ -52,14 +59,17 @@ export class HomeComponent implements AfterViewInit {
     event.preventDefault();
     event.stopPropagation();
     switch (shape.action) {
-      case 'GetInput':
-        break;
       case 'ToImageUrl':
         if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
           this.finishArrowCreation(shape.id);
         }
         break;
-      case 'ToFunTranslation':
+      case 'SuggestAge':
+        if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
+          this.finishArrowCreation(shape.id);
+        }
+        break;
+      case "TranslateIntoMorse":
         if (this.creatingArrow && this.startArrowId !== shape.id && !shape.parent) {
           this.finishArrowCreation(shape.id);
         }
@@ -69,22 +79,74 @@ export class HomeComponent implements AfterViewInit {
           this.finishArrowCreation(shape.id);
         }
         break;
+      case 'GetInput':
+        break;
       default:
         break;
     }
   }
 
   finishArrowCreation(shapeId: number) {
-    if (this.creatingArrow && this.startArrowId) {
+    const parent = this.shapes.find(s => s.id === this.startArrowId);
+    if (this.creatingArrow && parent) {
       this.shapes.map(shape => {
-        if (shape.id === this.startArrowId) {
-          shape.connections.add(shapeId);
+          if (shape.id === parent.id) {
+            shape.connections.add(shapeId);
+          }
+          if (shape.id === shapeId) {
+            shape.parent = parent.id;
+
+            parent.value.pipe(debounceTime(1000)).subscribe(value => {
+              if (shape.action === 'SuggestAge') {
+                this.suggestAge(value).then(ageResponse => {
+                    shape.value.next(ageResponse)
+                  }
+                )
+              } else if (shape.action === 'TranslateIntoMorse') {
+                this.translateIntoMorse(value).then(morseResponse => {
+                    shape.value.next(morseResponse)
+                  }
+                )
+
+              } else {
+                shape.value.next(value);
+              }
+            })
+          }
         }
-        shape.parent = this.startArrowId || undefined;
-      })
+      )
       this.startArrowId = null;
       this.creatingArrow = false;
       this.drawArrows();
+    }
+  }
+
+  async suggestAge(value: string): Promise<string> {
+    try {
+      const response = await lastValueFrom(
+        this.http.get<{ age: number }>(`https://api.agify.io?name=${encodeURIComponent(value)}`)
+      );
+      if (response.age === null) {
+        return "Sorry, I can't guess your age";
+      }
+      return (value + ' age is estimately ' + response.age);
+
+    } catch
+      (error) {
+      return "Failed to get age, sorry!"
+    }
+  }
+
+  async translateIntoMorse(value: string): Promise<string> {
+    try {
+      const response = await lastValueFrom(
+        this.http.get<{
+          contents: { translated: string }
+        }>(`https://api.funtranslations.com/translate/morse.json?text=${encodeURIComponent(value)}`)
+      );
+      return response.contents.translated;
+    } catch (error) {
+      return "Failed to get morse code, sorry!"
     }
   }
 
@@ -106,17 +168,16 @@ export class HomeComponent implements AfterViewInit {
           let fromShapeRect = fromShape.getBoundingClientRect();
           let toShapeRect = toShape.getBoundingClientRect();
 
-          const startX = this.shapes.find(s => s.id === connectionId)?.action === 'GetInput'
-            ? fromShapeRect.x
-            : (fromShapeRect.x - fromShapeRect.width / 2);
+          const [startX, startY] = shape.action === 'GetInput'
+            ? [fromShapeRect.x, (fromShapeRect.y + window.scrollY)]
+            : [(fromShapeRect.x - fromShapeRect.width / 2), (fromShapeRect.y + window.scrollY)];
 
-          const startY = fromShapeRect.y;
 
-          const endX = this.shapes.find(s => s.id === connectionId)?.action === 'OutPut'
+          const endX = shape.action === 'OutPut'
             ? toShapeRect.x
             : (toShapeRect.x - toShapeRect.width / 2);
 
-          const endY = toShapeRect.y;
+          const endY = toShapeRect.top + window.scrollY;
 
           // Draw line
           ctx.beginPath();
@@ -170,7 +231,7 @@ export class HomeComponent implements AfterViewInit {
 
     const data = event.dataTransfer?.getData('text/plain');
 
-    let action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut' | undefined;
+    let action: Action | undefined;
     switch (data) {
       case 'GetInput':
         action = 'GetInput';
@@ -178,8 +239,11 @@ export class HomeComponent implements AfterViewInit {
       case 'ToImageUrl':
         action = 'ToImageUrl';
         break;
-      case 'ToFunTranslation':
-        action = 'ToFunTranslation';
+      case 'SuggestAge':
+        action = 'SuggestAge';
+        break;
+      case 'TranslateIntoMorse':
+        action = 'TranslateIntoMorse';
         break;
       case 'OutPut':
         action = 'OutPut';
@@ -196,8 +260,8 @@ export class HomeComponent implements AfterViewInit {
         id: this.nextId++,
         action: action,
         position,
-        title: String(action),
-        value: '',
+        title: this.translateShapeTitle(action),
+        value: new BehaviorSubject<string>(''),
         connections: new Set<number>(),
       };
 
@@ -205,7 +269,7 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  onDragStart(event: DragEvent, action: 'GetInput' | 'ToImageUrl' | 'ToFunTranslation' | 'OutPut') {
+  onDragStart(event: DragEvent, action: Action) {
     event.dataTransfer?.setData('text/plain', action);
   }
 
@@ -222,7 +286,7 @@ export class HomeComponent implements AfterViewInit {
     const shape = this.shapes.find(s => s.id === id);
     const value = ($event.target as HTMLInputElement).value;
     if (shape && $event.target) {
-      shape.value = ($event.target as HTMLInputElement).value;
+      shape.value.next(value);
     }
   }
 
@@ -234,11 +298,28 @@ export class HomeComponent implements AfterViewInit {
     );
   }
 
-  protected readonly speechSynthesis = speechSynthesis;
-
   boardClicked() {
     this.creatingArrow = false;
     this.startArrowId = null;
+  }
+
+  getParentAction(shape: Shape): Action | undefined {
+    return this.shapes.find(s => s.id === shape.parent)?.action;
+  }
+
+  translateShapeTitle(action: Action): string {
+    switch (action) {
+      case "OutPut":
+        return "Result";
+      case "TranslateIntoMorse":
+        return "To Morse";
+      case 'GetInput':
+        return 'Input';
+      case 'ToImageUrl':
+        return 'To Image';
+      case 'SuggestAge':
+        return 'Get Age';
+    }
   }
 }
 

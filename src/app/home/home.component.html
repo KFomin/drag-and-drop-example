@@ -4,7 +4,10 @@
       <div class="shapes-container">
         <h4>Elements</h4>
         <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'GetInput')">Input</div>
-        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'ToFunTranslation')">Translate</div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'TranslateIntoMorse')">
+          Translate To Morse
+        </div>
+        <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'SuggestAge')">Suggest Age</div>
         <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'ToImageUrl')">To Image Url</div>
         <div class="shape" draggable="true" (dragstart)="onDragStart($event, 'OutPut')">Output</div>
       </div>
@@ -46,18 +49,23 @@
                    [value]="shape.title"
                    (input)="shapeTextChanged(shape.id, $event)">
             @if (shape.action === 'OutPut') {
-              @switch (shape.action) {
-                @case ('OutPut') {
-
+              @switch (getParentAction(shape)) {
+                @case ('SuggestAge') {
+                  <p class="output-text">{{ shape.value.getValue() }}</p>
                 }
-
+                @case ('ToImageUrl') {
+                  <img alt="image from url" class="output-image" [src]="shape.value.getValue()"/>
+                }
+                @default {
+                  <p class="output-text">{{ shape.value.getValue() }}</p>
+                }
               }
             }
             @if (shape.action === 'GetInput') {
               <textarea type="text"
                         class="shape-text-area"
                         aria-multiline="true"
-                        [value]="shape.value"
+                        [value]="shape.value.getValue()"
                         (input)="inputValueChanged(shape.id, $event)"></textarea>
             }
             @if (canConnect(shape)) {

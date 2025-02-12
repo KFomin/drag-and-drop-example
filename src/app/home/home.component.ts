@@ -52,8 +52,6 @@ export class HomeComponent implements AfterViewInit, OnInit {
 
   onCardClick(event: MouseEvent, card: Card) {
     event.preventDefault();
-    event.stopPropagation();
-    console.log(card.kind);
     if (this.creatingArrow && !card.parent) {
       console.log(this.startArrowId)
       console.log(card.id)

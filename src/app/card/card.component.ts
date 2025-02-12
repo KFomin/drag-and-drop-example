@@ -36,7 +36,9 @@ export class CardComponent {
     }
   }
 
-  deleteCard(id: number) {
+  deleteCard(id: number, $event: MouseEvent) {
+    $event.stopPropagation();
+    $event.preventDefault();
     const newCards = this.cardService.cards
       .getValue()
       .filter(s => (s.id !== id))
@@ -67,7 +69,9 @@ export class CardComponent {
     }
   }
 
-  startArrowCreation(id: number) {
+  startArrowCreation(id: number, $event: MouseEvent) {
+    $event.stopPropagation();
+    $event.preventDefault();
     this.cardService.startArrowId.next(id);
     this.cardService.creatingArrow.next(true);
   }

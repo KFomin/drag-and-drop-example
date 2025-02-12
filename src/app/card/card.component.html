@@ -1,8 +1,8 @@
 <div
   cdkDrag
+  (cdkDragMoved)="dragCardHandler()"
   cdkDragBoundary=".board"
   class="card-on-board"
-  (cdkDragMoved)="dragCardHandler()"
   [id]="card.id + '-card-on-board'"
   [ngClass]="{
             'open-to-connect' : creatingArrow && card.kind !== 'Input' && !card.parent,
@@ -15,11 +15,7 @@
               'top': card.position.y + 'px',
               }"
 >
-  <div cdkDragHandle class="drag-handle">
-    <div class="arrow horizontal"></div>
-    <div class="arrow vertical"></div>
-  </div>
-  <div class="drag-delete" (click)="deleteCard(card.id)">
+  <div class="drag-delete" (click)="deleteCard(card.id, $event)">
     <div class="part-1"></div>
     <div class="part-2"></div>
   </div>
@@ -52,6 +48,6 @@
   @if (canConnect(card)) {
     <div
       class="connect-arrow"
-      (click)="startArrowCreation(card.id)"></div>
+      (click)="startArrowCreation(card.id, $event)"></div>
   }
 </div>

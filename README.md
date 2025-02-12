@@ -39,16 +39,16 @@ Angular CLI simplifies the process of creating, developing, and running Angular 
 
 ## Cloning the repository
 
-1. Clone your project repository:
+1. Clone project repository:
 
     ```bash
-    git clone https://github.com/your_user/your_repository.git
+    git clone https://github.com/KFomin/drag-and-drop-example.git
     ```
 
-2. Navigate to your project directory:
+2. Navigate to project directory:
 
     ```bash
-    cd your_repository
+    cd drag-and-drop-example
     ```
 
 ## Installing dependencies

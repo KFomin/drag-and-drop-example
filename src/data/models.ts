@@ -5,7 +5,7 @@ export type CardKind = 'Input' | 'ToImageUrl' | 'SuggestAge' | 'Output' | 'ToMor
 
 export interface Card {
   id: number;
-  action: CardKind;
+  kind: CardKind;
   position: Point;
   title: string;
   value: BehaviorSubject<string>;

@@ -1,12 +1,16 @@
 import {Injectable} from '@angular/core';
 import {Card, CardKind} from "../data/models";
-import {lastValueFrom} from "rxjs";
+import {BehaviorSubject, lastValueFrom, Subject} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 
 @Injectable({
     providedIn: 'root'
 })
 export class CardService {
+    cards: BehaviorSubject<Card[]> = new BehaviorSubject<Card[]>([]);
+    creatingArrow: BehaviorSubject<boolean> = new BehaviorSubject(false);
+    startArrowId: Subject<number> = new Subject();
+
     constructor(private http: HttpClient) {
     }
 

@@ -1,0 +1,61 @@
+<div
+  cdkDrag
+  cdkDragBoundary=".board"
+  class="card-on-board"
+  (cdkDragMoved)="dragCardHandler()"
+  [id]="card.id + '-card-on-board'"
+  [ngClass]="{
+            'open-to-connect' : creatingArrow && card.kind !== 'Input' && !card.parent,
+            'connectable' : card.kind !== 'Input',
+            'input-card' : card.kind === 'Input',
+            'output-card' : card.kind === 'Output'
+            }"
+  [ngStyle]="{'position': 'absolute',
+              'left': card.position.x + 'px',
+              'top': card.position.y + 'px',
+              }"
+>
+  <div cdkDragHandle class="drag-handle">
+    <div class="arrow horizontal"></div>
+    <div class="arrow vertical"></div>
+  </div>
+  <div class="drag-delete" (click)="deleteCard(card.id)">
+    <div class="part-1"></div>
+    <div class="part-2"></div>
+  </div>
+  <input type="text"
+         class="card-input"
+         aria-multiline="true"
+         [value]="card.title"
+         (input)="cardTextChanged(card.id, $event)">
+  @if (card.kind === 'Output') {
+    @if (card.id === loadingCardId) {
+      <span class="loader"></span>
+    } @else {
+      @switch (getParentKind(card)) {
+        @case ('SuggestAge') {
+          <p class="output-text">{{ card.value.getValue() }}</p>
+        }
+        @case ('ToImageUrl') {
+          <img alt="image-from-url" class="output-image" [src]="card.value.getValue()"/>
+        }
+        @default {
+          <p class="output-text">{{ card.value.getValue() }}</p>
+        }
+      }
+    }
+  }
+  @if (card.kind === 'Input') {
+    <textarea type="text"
+              class="card-text-area"
+              aria-multiline="true"
+              [value]="card.value.getValue()"
+              (input)="inputValueChanged(card.id, $event)">
+              </textarea>
+  }
+  @if (canConnect(card)) {
+    <div
+      class="connect-arrow"
+      (click)="startArrowCreation(card.id)"></div>
+  }
+</div>

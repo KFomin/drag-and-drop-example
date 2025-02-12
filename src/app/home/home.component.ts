@@ -1,10 +1,11 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
 import {MatDrawer, MatDrawerContainer, MatDrawerContent} from "@angular/material/sidenav";
-import {NgClass, NgForOf, NgStyle} from "@angular/common";
+import {NgForOf} from "@angular/common";
 import {DragDropModule, Point} from "@angular/cdk/drag-drop";
 import {BehaviorSubject, debounceTime} from "rxjs";
 import {CardKind, Card} from "../../data/models";
 import {CardService} from "../../service/card.service";
+import {CardComponent} from "../card/card.component";
 
 
 @Component({
@@ -15,71 +16,78 @@ import {CardService} from "../../service/card.service";
     MatDrawer,
     MatDrawerContent,
     NgForOf,
-    NgStyle,
     DragDropModule,
-    NgClass,
+    CardComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
-export class HomeComponent implements AfterViewInit {
+export class HomeComponent implements AfterViewInit, OnInit {
   @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
-  ctx: CanvasRenderingContext2D | null = null;
+  ctx: BehaviorSubject<CanvasRenderingContext2D | null> = new BehaviorSubject<CanvasRenderingContext2D | null>(null);
   cards: Card[] = [];
   nextId = 1;
-  creatingArrow: boolean = false;
+  creatingArrow = false;
   startArrowId: number | null = null;
   loadingCardId: number | null = null;
 
-  constructor(private card: CardService) {
+  constructor(private cardService: CardService) {
+  }
+
+  ngOnInit() {
+    this.cardService.cards.subscribe(cards => {
+      this.cards = cards;
+      this.drawArrows();
+    })
+    this.cardService.creatingArrow.subscribe(value => this.creatingArrow = value)
+    this.cardService.startArrowId.subscribe(value => this.startArrowId = value)
   }
 
   ngAfterViewInit() {
-    this.ctx = this.canvas.nativeElement.getContext('2d');
+    this.ctx.next(this.canvas.nativeElement.getContext('2d'));
     this.canvas.nativeElement.width = window.innerWidth;
     this.canvas.nativeElement.height = window.innerHeight;
     this.drawArrows();
   }
 
-  startArrowCreation(cardId: number) {
-    this.startArrowId = cardId;
-    this.creatingArrow = true;
-  }
 
   onCardClick(event: MouseEvent, card: Card) {
     event.preventDefault();
     event.stopPropagation();
-    switch (card.action) {
-      case 'ToImageUrl':
-        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
-          this.finishArrowCreation(card.id);
-        }
-        break;
-      case 'SuggestAge':
-        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
-          this.finishArrowCreation(card.id);
-        }
-        break;
-      case "ToMorse":
-        if (this.creatingArrow && this.startArrowId !== card.id && !card.parent) {
-          this.finishArrowCreation(card.id);
-        }
-        break;
-      case 'Output':
-        if (this.creatingArrow && !card.parent) {
-          this.finishArrowCreation(card.id);
-        }
-        break;
-      case 'Input':
-        break;
-      default:
-        break;
+    console.log(card.kind);
+    if (this.creatingArrow && !card.parent) {
+      console.log(this.startArrowId)
+      console.log(card.id)
+      switch (card.kind) {
+        case 'ToImageUrl':
+          if (this.startArrowId !== card.id) {
+            this.finishArrowCreation(card.id);
+          }
+          break;
+        case 'SuggestAge':
+          if (this.startArrowId !== card.id) {
+            this.finishArrowCreation(card.id);
+          }
+          break;
+        case 'ToMorse':
+          if (this.startArrowId !== card.id) {
+            this.finishArrowCreation(card.id);
+          }
+          break;
+        case 'Output':
+          if (!card.parent) {
+            this.finishArrowCreation(card.id);
+          }
+          break;
+        default:
+          break;
+      }
     }
   }
 
   finishArrowCreation(cardId: number) {
     const parent = this.cards.find(s => s.id === this.startArrowId);
-    if (this.creatingArrow && parent) {
+    if (this.cardService.creatingArrow.value && parent) {
       this.cards.map(card => {
           if (card.id === parent.id) {
             card.connections.add(cardId);
@@ -88,14 +96,14 @@ export class HomeComponent implements AfterViewInit {
             card.parent = parent.id;
 
             parent.value.pipe(debounceTime(1000)).subscribe(value => {
-              if (card.action === 'SuggestAge') {
-                this.card.suggestAge(value).then(ageResponse => {
+              if (card.kind === 'SuggestAge') {
+                this.cardService.suggestAge(value).then(ageResponse => {
                     this.loadingCardId = null;
                     card.value.next(ageResponse)
                   }
                 )
-              } else if (card.action === 'ToMorse') {
-                this.card.translateIntoMorse(value).then(morseResponse => {
+              } else if (card.kind === 'ToMorse') {
+                this.cardService.translateIntoMorse(value).then(morseResponse => {
                     this.loadingCardId = null;
                     card.value.next(morseResponse)
                   }
@@ -107,29 +115,26 @@ export class HomeComponent implements AfterViewInit {
           }
         }
       )
+      this.cardService.cards.next(this.cards);
       this.startArrowId = null;
-      this.creatingArrow = false;
+      this.cardService.creatingArrow.next(false);
       this.drawArrows();
     }
   }
 
-
   drawArrows() {
-    if (!this.ctx) {
-      return;
+    let ctx = this.ctx.getValue();
+    if (ctx !== null) {
+      ctx.canvas.width = ctx.canvas.clientWidth;
+      ctx.canvas.height = ctx.canvas.clientHeight;
+      ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
+
+      this.cards.map(card => {
+        for (const connectionId of card.connections) {
+          this.ctx.next(this.drawArrow(ctx, card, connectionId))
+        }
+      })
     }
-    let ctx = this.ctx;
-
-    ctx.canvas.width = ctx.canvas.clientWidth;
-    ctx.canvas.height = ctx.canvas.clientHeight;
-    ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
-
-    this.cards.map(card => {
-      for (const connectionId of card.connections) {
-        ctx = this.drawArrow(ctx, card, connectionId);
-      }
-    })
-    this.ctx = ctx;
   }
 
   drawArrow(ctx: CanvasRenderingContext2D, card: Card, connectionId: number): CanvasRenderingContext2D {
@@ -139,12 +144,12 @@ export class HomeComponent implements AfterViewInit {
       let fromCardRect = fromCard.getBoundingClientRect();
       let toCardRect = toCard.getBoundingClientRect();
 
-      const [startX, startY] = card.action === 'Input'
+      const [startX, startY] = card.kind === 'Input'
         ? [fromCardRect.x, (fromCardRect.y + window.scrollY)]
         : [(fromCardRect.x - fromCardRect.width / 2), (fromCardRect.y + window.scrollY)];
 
 
-      const endX = card.action === 'Output'
+      const endX = card.kind === 'Output'
         ? toCardRect.x
         : (toCardRect.x - toCardRect.width / 2);
 
@@ -180,13 +185,6 @@ export class HomeComponent implements AfterViewInit {
       ctx.fill();
     }
     return ctx;
-  }
-
-  cardTextChanged(cardId: number, event: Event) {
-    const card = this.cards.find(s => s.id === cardId);
-    if (card && event.target) {
-      card.title = (event.target as HTMLInputElement).value;
-    }
   }
 
   allowDrop(event: DragEvent) {
@@ -225,14 +223,14 @@ export class HomeComponent implements AfterViewInit {
 
       const newCard: Card = {
         id: this.nextId++,
-        action: action,
+        kind: action,
         position,
-        title: this.card.translateCardTitle(action),
+        title: this.cardService.translateCardTitle(action),
         value: new BehaviorSubject<string>(''),
         connections: new Set<number>(),
       };
-
       this.cards.push(newCard);
+      this.cardService.cards.next(this.cards);
     }
   }
 
@@ -249,43 +247,17 @@ export class HomeComponent implements AfterViewInit {
     this.drawArrows();
   }
 
-  inputValueChanged(cardId: number, $event: Event) {
-    const card = this.cards.find(s => s.id === cardId);
-    const value = ($event.target as HTMLInputElement).value;
-    if (card && $event.target) {
-      card.value.next(value);
-    }
-  }
-
-  canConnect(card: Card): boolean {
-    return (
-      card.action !== 'Output'
-      && ((card.action === 'Input' && !this.creatingArrow)
-        || this.cards.some(s => s.connections.has(card.id)))
-    );
-  }
-
   boardClicked() {
-    this.creatingArrow = false;
+    this.cardService.creatingArrow.next(false);
     this.startArrowId = null;
   }
 
-  getParentAction(card: Card): CardKind | undefined {
-    return this.cards.find(s => s.id === card.parent)?.action;
-  }
-
-  deleteCard(id: number) {
-    this.cards = this.cards
-      .filter(s => (s.id !== id))
-      .map(s => {
-          if (s.parent === id) {
-            delete s.parent;
-          }
-          s.connections.delete(id)
-          return s;
-        }
-      );
-    this.drawArrows();
+  getParentCardKind(card: Card): CardKind | null {
+    const parentCard = this.cardService.cards.getValue().find(s => s.id === card.parent);
+    if (parentCard) {
+      return parentCard.kind
+    }
+    return null;
   }
 }
 

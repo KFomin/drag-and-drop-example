@@ -21,68 +21,14 @@
         (dragover)="allowDrop($event)"
       >
         <ng-container *ngFor="let card of cards">
-          <div
-            cdkDrag
-            cdkDragBoundary=".board"
-            class="card-on-board"
-            (click)="onCardClick($event, card)"
-            (cdkDragMoved)="drawArrows()"
-            [id]="card.id + '-card-on-board'"
-            [ngClass]="{
-            'open-to-connect' : creatingArrow && card.action !== 'Input' && !card.parent,
-            'connectable' : card.action !== 'Input',
-            'input-card' : card.action === 'Input',
-            'output-card' : card.action === 'Output'
-            }"
-            [ngStyle]="{'position': 'absolute',
-                        'left': card.position.x + 'px',
-                        'top': card.position.y + 'px',
-                        }"
+          <app-card [card]="card"
+                    [loadingCardId]="loadingCardId"
+                    [getParentKind]="getParentCardKind"
+                    [dragCardHandler]="drawArrows.bind(this)"
+                    (click)="onCardClick($event, card)"
+                    cdkDrag
           >
-            <div cdkDragHandle class="drag-handle">
-              <div class="arrow horizontal"></div>
-              <div class="arrow vertical"></div>
-            </div>
-            <div class="drag-delete" (click)="deleteCard(card.id)">
-              <div class="part-1"></div>
-              <div class="part-2"></div>
-            </div>
-            <input type="text"
-                   class="card-input"
-                   aria-multiline="true"
-                   [value]="card.title"
-                   (input)="cardTextChanged(card.id, $event)">
-            @if (card.action === 'Output') {
-              @if (card.id === loadingCardId) {
-                <span class="loader"></span>
-              } @else {
-                @switch (getParentAction(card)) {
-                  @case ('SuggestAge') {
-                    <p class="output-text">{{ card.value.getValue() }}</p>
-                  }
-                  @case ('ToImageUrl') {
-                    <img alt="image from url" class="output-image" [src]="card.value.getValue()"/>
-                  }
-                  @default {
-                    <p class="output-text">{{ card.value.getValue() }}</p>
-                  }
-                }
-              }
-            }
-            @if (card.action === 'Input') {
-              <textarea type="text"
-                        class="card-text-area"
-                        aria-multiline="true"
-                        [value]="card.value.getValue()"
-                        (input)="inputValueChanged(card.id, $event)">
-              </textarea>
-            }
-            @if (canConnect(card)) {
-              <div
-                class="connect-arrow"
-                (click)="startArrowCreation(card.id)"></div>
-            }
-          </div>
+          </app-card>
         </ng-container>
         <canvas #canvas class="canvas-lines"></canvas>
       </div>

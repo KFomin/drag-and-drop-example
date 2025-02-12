@@ -29,19 +29,15 @@
          [value]="card.title"
          (input)="cardTextChanged(card.id, $event)">
   @if (card.kind === 'Output') {
-    @if (card.id === loadingCardId) {
-      <span class="loader"></span>
-    } @else {
-      @switch (getParentKind(card)) {
-        @case ('SuggestAge') {
-          <p class="output-text">{{ card.value.getValue() }}</p>
-        }
-        @case ('ToImageUrl') {
-          <img alt="image-from-url" class="output-image" [src]="card.value.getValue()"/>
-        }
-        @default {
-          <p class="output-text">{{ card.value.getValue() }}</p>
-        }
+    @switch (getParentKind(card)) {
+      @case ('SuggestAge') {
+        <p class="output-text">{{ card.value.getValue() }}</p>
+      }
+      @case ('ToImageUrl') {
+        <img alt="image-from-url" class="output-image" [src]="card.value.getValue()"/>
+      }
+      @default {
+        <p class="output-text">{{ card.value.getValue() }}</p>
       }
     }
   }

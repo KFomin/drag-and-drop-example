@@ -200,24 +200,3 @@
   height: 70%;
   border-radius: 5px;
 }
-
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #FFF;
-  margin-top: 15%;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}

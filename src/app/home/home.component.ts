@@ -29,7 +29,6 @@ export class HomeComponent implements AfterViewInit, OnInit {
   nextId = 1;
   creatingArrow = false;
   startArrowId: number | null = null;
-  loadingCardId: number | null = null;
 
   constructor(private cardService: CardService) {
   }
@@ -98,13 +97,11 @@ export class HomeComponent implements AfterViewInit, OnInit {
             parent.value.pipe(debounceTime(1000)).subscribe(value => {
               if (card.kind === 'SuggestAge') {
                 this.cardService.suggestAge(value).then(ageResponse => {
-                    this.loadingCardId = null;
                     card.value.next(ageResponse)
                   }
                 )
               } else if (card.kind === 'ToMorse') {
                 this.cardService.translateIntoMorse(value).then(morseResponse => {
-                    this.loadingCardId = null;
                     card.value.next(morseResponse)
                   }
                 )

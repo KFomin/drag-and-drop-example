@@ -22,7 +22,6 @@
       >
         <ng-container *ngFor="let card of cards">
           <app-card [card]="card"
-                    [loadingCardId]="loadingCardId"
                     [getParentKind]="getParentCardKind"
                     [dragCardHandler]="drawArrows.bind(this)"
                     (click)="onCardClick($event, card)"

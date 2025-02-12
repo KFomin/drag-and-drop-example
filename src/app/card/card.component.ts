@@ -18,7 +18,6 @@ import {CardService} from "../../service/card.service";
 })
 export class CardComponent {
   @Input() card!: Card;
-  @Input() loadingCardId!: number | null;
   @Input() getParentKind!: (card: Card) => CardKind | null;
   @Input() dragCardHandler!: () => void;
 
